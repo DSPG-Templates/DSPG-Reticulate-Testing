@@ -1,0 +1,40 @@
+---
+title: "Python Testing"
+author: ["Harun Celik"]
+categories: ["Python", "Test"]
+date: "2024-06-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(reticulate)
+```
+
+```{r}
+print("First some R Code")
+```
+
+```{r, eval=TRUE}
+# Check for virtual environment, if it doesn't exist, create the venv, if it exists
+# then use the venv called "r-python"
+
+if (virtualenv_exists("r-python")) {
+  use_virtualenv("r-python")
+} else {
+  virtualenv_create("r-python")
+  use_virtualenv("r-python")
+}
+```
+
+```{r, eval=TRUE}
+# Installing dependencies for the python virtualenv
+
+virtualenv_install(envname = "r-python", packages = c("numpy", "pandas", "scikit-learn"), all = TRUE)
+```
+
+```{python}
+import pandas as pd
+print("Currently using Pandas Version:", pd.__version__)
+```
+
+

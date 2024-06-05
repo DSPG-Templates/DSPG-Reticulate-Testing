@@ -1,0 +1,96 @@
+name: render-r-python-markdown
+
+run-name: Running Render on Markdown Files
+
+on: [push]
+
+env:
+  MARKDOWN_DOCUMENT: Python_Testing.qmd
+  QMD_TITLE: \"Python Testing\"
+  QMD_AUTHOR: \[\"Harun Celik\"\]
+  QMD_TAGS: \[\"Python\", \"Test\"\]
+
+jobs:
+  install-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Environment Variables
+        run: |
+          echo $MARKDOWN_DOCUMENT
+          echo $QMD_TITLE
+          echo $QMD_AUTHOR
+          echo $QMD_TAGS
+
+      - name: Checkout Assignment Repository
+        uses: actions/checkout@v4
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          install-r: "true"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          
+      - name: View Repository Directories
+        run: |
+          ls -la
+      
+      - name: Install Python Dependencies
+        run: |
+          pip install -r requirements.txt
+        
+      - name: Install R Dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          cache: "always"
+
+      - name: Install Quarto CLI
+        run: |
+          wget https://quarto.org/download/latest/quarto-linux-amd64.deb
+          sudo dpkg -i quarto-linux-amd64.deb
+          quarto check install
+
+      - name: Render QMD File
+        env:
+          OUTPUT_FILE: "${{ github.actor }}_render_output.html"
+        run: |
+          R -e "quarto::quarto_render(input = '$MARKDOWN_DOCUMENT', output_format = 'html', output_file = Sys.getenv('OUTPUT_FILE'))"
+
+      - name: Check if Title is Correct
+        run: |
+          echo "Checking YAML for Correct Title"
+          sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT
+          if sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT | grep -q "title: ${QMD_TITLE}"; then
+            echo "Title exists in YAML block."
+            exit 0
+          else
+            echo "Title does not exist in YAML block."
+            exit 1
+          fi
+
+      - name: Check if Authors are Correct
+        run: |
+          echo "Checking YAML for Correct Author"
+          sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT
+          if sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT | grep -q "author: ${QMD_AUTHOR}"; then
+            echo "Correct Author exists in YAML block."
+            exit 0
+          else
+            echo "Correct Author does not exist in YAML block."
+            exit 1
+          fi
+
+      - name: Check if Tags are Correct
+        run: |
+          echo "Checking YAML for Correct Tags"
+          sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT
+          if sed -n '/^\s*---\s*$/,/^\s*---\s*$/p' $MARKDOWN_DOCUMENT | grep -q "categories: ${QMD_TAGS}"; then
+            echo "Correct Tags exist in YAML block."
+            exit 0
+          else
+            echo "Correct Tags do not exist in YAML block."
+            exit 1
+          fi
